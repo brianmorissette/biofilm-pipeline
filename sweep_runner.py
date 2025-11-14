@@ -1,45 +1,44 @@
 # src/sweep_runner.py
 import wandb
-from src.data_loading.dataset import BiofilmDataset
+from src.data_loading.dataset import get_dataloaders
 from src.models.factory import build_model
 from src.training.trainer import Trainer
 
 def run(config):
-
-    # --- DATA ---
-    dataset = BiofilmDataset(
-        patch_size=config.patch_size,
-        threshold_method=config.threshold_method,
-        # ...other preprocessing params
+    # ---- DATA ----
+    train_loader, test_loader = get_dataloaders(
+        root="data/raw",
+        cfg=config
     )
-    train_loader, val_loader = dataset.get_loaders(batch_size=config.batch_size)
 
-    # --- MODEL ---
+    # ---- MODEL ----
     model = build_model(
         architecture=config.model_architecture,
-        depth=config.model_depth,
-        filters=config.model_filters
+        in_channels=config.in_channels,
+        num_classes=config.num_classes,
+        patch_size=config.patch_size
     )
 
-    # --- TRAIN ---
+    # ---- TRAIN ----
     trainer = Trainer(
         model=model,
         lr=config.learning_rate,
         epochs=config.epochs
     )
 
-    trainer.fit(train_loader, val_loader)
+    val_loss = trainer.fit(train_loader, val_loader)
 
-    # --- Log ---
+    # ---- LOG ----
     wandb.log({
-        "val_loss": trainer.val_loss,
-        "val_mae": trainer.val_mae,
-        "best_epoch": trainer.best_epoch
+        "val_loss": val_loss,
+        "best_epoch": trainer.best_epoch,
     })
 
+
 def main():
-    wandb.init(project="biofilm-surface-area", config=DEFAULT_CONFIG)
+    wandb.init(project="biofilm-surface-area")
     run(wandb.config)
+
 
 if __name__ == "__main__":
     main()
