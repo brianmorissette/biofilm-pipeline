@@ -1,0 +1,12 @@
+method: grid
+parameters:
+  patch_size:
+    values: [28, 56, 112]
+  epochs:
+    values: [10, 20]
+  coolparameter1:
+    values: [1.0, 2.0, 3.0]
+  coolparameter2:
+    values: [1.0, 2.0, 3.0]
+program: sweep_runner.py
+project: biofilm-pipeline-sweep
