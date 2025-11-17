@@ -88,15 +88,15 @@ def get_dataloaders(root, cfg):
     # build (img,label) samples for each split
     train_samples = _build_pairs(
         raw_pairs=train_raw,
-        threshold_method=cfg.get("threshold_method", "iterative"),
-        patch_size=cfg.get("patch_size", 128),
-        patch_stride=cfg.get("patch_stride", 128),
+        threshold_method=cfg["threshold_method"],
+        patch_size=cfg["patch_size"],
+        patch_stride=cfg["patch_stride"],
     )
     test_samples = _build_pairs(
         raw_pairs=test_raw,
-        threshold_method=cfg.get("threshold_method", "iterative"),
-        patch_size=cfg.get("patch_size", 128),
-        patch_stride=cfg.get("patch_stride", 128),
+        threshold_method=cfg["threshold_method"],
+        patch_size=cfg["patch_size"],
+        patch_stride=cfg["patch_stride"],
     )
 
     # wrap in ImageLabelDataset
@@ -106,14 +106,14 @@ def get_dataloaders(root, cfg):
     # create DataLoaders
     train_loader = DataLoader(
         train_samples,
-        batch_size=cfg.get("batch_size", 32),
+        batch_size=cfg["batch_size"],
         shuffle=True,
         num_workers=0,
         pin_memory=False,
     )
     test_loader = DataLoader(
         test_samples,
-        batch_size=cfg.get("batch_size", 32),
+        batch_size=cfg["batch_size"],
         shuffle=False,
         num_workers=0,
         pin_memory=False,

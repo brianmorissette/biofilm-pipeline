@@ -1,12 +1,16 @@
 method: grid
 parameters:
   patch_size:
-    values: [28, 56, 112]
+    values: [128]
+  patch_stride:
+    values: [128]
+  threshold_method:
+    values: ["iterative"]
   epochs:
-    values: [10, 20]
-  coolparameter1:
-    values: [1.0, 2.0, 3.0]
-  coolparameter2:
-    values: [1.0, 2.0, 3.0]
+    values: [10]
+  learning_rate:
+    values: [1e-3]
+  batch_size:
+    values: [32]
 program: sweep_runner.py
 project: biofilm-pipeline-sweep

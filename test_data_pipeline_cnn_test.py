@@ -62,7 +62,6 @@ def main():
     p.add_argument("--root", type=str, default="raw_data_reorganized", help="Root folder containing biofilm/ and release/")
     p.add_argument("--epochs", type=int, default=5)
     p.add_argument("--lr", type=float, default=1e-3)
-    p.add_argument("--weight_decay", type=float, default=0.0)
     p.add_argument("--batch_size", type=int, default=32)
     p.add_argument("--patch_size", type=int, default=128)
     p.add_argument("--patch_stride", type=int, default=128)
@@ -80,18 +79,14 @@ def main():
         "patch_size": args.patch_size,
         "patch_stride": args.patch_stride,
         "threshold_method": args.threshold_method,
-        "train_fraction": args.train_fraction,
-        "seed": args.seed,
         "shuffle_train": True,
-        "num_workers": args.num_workers,
-        "pin_memory": args.pin_memory,
-        "include_unrotated": False,  # set True if you want original patches too
+        "epochs": args.epochs,
     }
     train_loader, test_loader = get_dataloaders(root=args.root, cfg=cfg)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SurfaceAreaCNN().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     loss_fn = nn.MSELoss()
 
     # Quick shape sanity-check
@@ -100,7 +95,7 @@ def main():
     print(f"Device: {device}, Train batches: {len(train_loader)}, Test batches: {len(test_loader)}")
 
     best_test_rmse = float("inf")
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(1, cfg["epochs"] + 1):
         train_mse = train_one_epoch(model, train_loader, device, optimizer, loss_fn)
         test_mse, test_mae, test_rmse = evaluate(model, test_loader, device, loss_fn)
         print(f"Epoch {epoch:02d} | train MSE: {train_mse:.5f} | test MSE: {test_mse:.5f} | test MAE: {test_mae:.5f} | test RMSE: {test_rmse:.5f}")

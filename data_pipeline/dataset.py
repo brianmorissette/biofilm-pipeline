@@ -11,6 +11,9 @@ from data_loading.biofilm_preprocess import *
 from data_loading.release_preprocess import *
 from utils import *
 
+# -----------------------------
+# NOT USED - JUST LOOK AT THE ROOT/PATH STUFF
+# -----------------------------
 
 
 raw_biofilm_images = load_images("biofilm_data/biofilm")
