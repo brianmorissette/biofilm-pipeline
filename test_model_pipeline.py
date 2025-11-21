@@ -12,7 +12,7 @@ from model_pipeline.training import train_one_epoch, evaluate
 cfg = {
     "batch_size": 32,
     "patch_size": 128,
-    "patch_stride": 128,
+    "stride_multiplier": 1,
     "threshold_method": "iterative",
     "shuffle_train": True,
     "epochs": 10,

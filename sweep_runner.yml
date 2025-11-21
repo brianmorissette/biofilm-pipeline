@@ -2,8 +2,8 @@ method: grid
 parameters:
   patch_size:
     values: [64, 128, 192]
-  patch_stride:
-    values: [None, patch_size*2]
+  stride_multiplier:
+    values: [1, 2]
   threshold_method:
     values: ["iterative"]
   epochs:

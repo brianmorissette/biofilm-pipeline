@@ -64,7 +64,7 @@ def main():
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--batch_size", type=int, default=32)
     p.add_argument("--patch_size", type=int, default=128)
-    p.add_argument("--patch_stride", type=int, default=128)
+    p.add_argument("--stride_multiplier", type=int, default=1)
     p.add_argument("--threshold_method", type=str, default="iterative")
     p.add_argument("--train_fraction", type=float, default=0.8)
     p.add_argument("--seed", type=int, default=42)
@@ -77,7 +77,7 @@ def main():
     cfg = {
         "batch_size": args.batch_size,
         "patch_size": args.patch_size,
-        "patch_stride": args.patch_stride,
+        "stride_multiplier": args.stride_multiplier,
         "threshold_method": args.threshold_method,
         "shuffle_train": True,
         "epochs": args.epochs,

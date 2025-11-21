@@ -97,13 +97,13 @@ def get_dataloaders(root, cfg):
         raw_pairs=train_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
-        patch_stride=cfg["patch_stride"],
+        stride_multiplier=cfg["stride_multiplier"],
     )
     validation_samples = _build_pairs(
         raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
-        patch_stride=cfg["patch_stride"],
+        stride_multiplier=cfg["stride_multiplier"],
     )
 
     # wrap in ImageLabelDataset
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         cfg={
             "batch_size": 32,
             "patch_size": 128,
-            "patch_stride": 128,
+            "stride_multiplier": 1,
             "threshold_method": "iterative",
         },
     )
