@@ -18,4 +18,4 @@ SBATCH --mem=16gb
 
 # Run a python program using our local virtual environment
 cd /home/bfmorissette/biofilm-pipeline
-/home/bfmorissette/.local/bin/uv run wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/g408fwss
+/home/bfmorissette/.local/bin/uv run wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/kmwh2539

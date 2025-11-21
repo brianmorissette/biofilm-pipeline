@@ -36,7 +36,7 @@ class ImageLabelDataset(Dataset):
 # -----------------------------
 # Build (img,label) pairs from raw images (biofilm, release)
 # -----------------------------
-def _build_pairs(raw_pairs, threshold_method, patch_size, patch_stride):
+def _build_pairs(raw_pairs, threshold_method, patch_size, stride_multiplier):
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
     for biofilm, release in raw_pairs:
@@ -54,7 +54,7 @@ def _build_pairs(raw_pairs, threshold_method, patch_size, patch_stride):
     # 2) extract patches + rotations (original + 90/180/270)
     samples = []
     for release, biofilm_label in pre_patch_pairs:
-        for patch in extract_patches(release, patch_size=patch_size, stride=patch_stride):
+        for patch in extract_patches(release, patch_size=patch_size, stride_multiplier=stride_multiplier):
             samples.append((patch, biofilm_label))
             samples.append((rotate_image_90(patch),  biofilm_label))
             samples.append((rotate_image_180(patch), biofilm_label))
