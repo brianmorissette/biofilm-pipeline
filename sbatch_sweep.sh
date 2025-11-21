@@ -6,16 +6,18 @@ SBATCH --partition short
 SBATCH -N 1
 # One job on that node
 SBATCH -n 1
+# Request 4 CPU Cores
+SBATCH -c 4
 # Please give me a GPU
 SBATCH --gres=gpu
 # Give a CPU from the following list
 SBATCH --constraint="A100"
 
 # Ask for memory
-SBATCH --mem=16gb
+SBATCH --mem=32gb
 
 # Get a node for more general use.
 
 # Run a python program using our local virtual environment
 cd /home/bfmorissette/biofilm-pipeline
-/home/bfmorissette/.local/bin/uv run wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/kmwh2539
+/home/bfmorissette/.local/bin/uv run wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/687d5dy5
