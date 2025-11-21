@@ -80,6 +80,13 @@ def get_dataloaders(root, cfg):
     # train/test split at image level (pre-augmentation)
     train_raw, test_raw = train_test_split(
         raw_pairs,
+        train_size=0.9,
+        random_state=42,
+        shuffle=True,
+    )
+
+    train_raw, validation_raw = train_test_split(
+        train_raw,
         train_size=0.8,
         random_state=42,
         shuffle=True,
@@ -92,8 +99,8 @@ def get_dataloaders(root, cfg):
         patch_size=cfg["patch_size"],
         patch_stride=cfg["patch_stride"],
     )
-    test_samples = _build_pairs(
-        raw_pairs=test_raw,
+    validation_samples = _build_pairs(
+        raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
         patch_stride=cfg["patch_stride"],
@@ -101,7 +108,7 @@ def get_dataloaders(root, cfg):
 
     # wrap in ImageLabelDataset
     train_samples = ImageLabelDataset(train_samples)
-    test_samples = ImageLabelDataset(test_samples)
+    validation_samples = ImageLabelDataset(validation_samples)
 
     # create DataLoaders
     train_loader = DataLoader(
@@ -111,18 +118,18 @@ def get_dataloaders(root, cfg):
         num_workers=0,
         pin_memory=False,
     )
-    test_loader = DataLoader(
-        test_samples,
+    validation_loader = DataLoader(
+        validation_samples,
         batch_size=cfg["batch_size"],
         shuffle=False,
         num_workers=0,
         pin_memory=False,
     )
-    return train_loader, test_loader
+    return train_loader, validation_loader
 
 
 if __name__ == "__main__":
-    train_loader, test_loader = get_dataloaders(
+    train_loader, validation_loader = get_dataloaders(
         root="raw_data_reorganized",
         cfg={
             "batch_size": 32,
