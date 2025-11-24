@@ -17,11 +17,12 @@ cfg = {
     "shuffle_train": True,
     "epochs": 10,
     "learning_rate": 1e-3,
+    "first_layer_channels": 8,
 }
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SurfaceAreaCNN(image_size=cfg["patch_size"]).to(device)
+model = SurfaceAreaCNN(image_size=cfg["patch_size"], first_layer_channels=cfg["first_layer_channels"]).to(device)
 optimizer = torch.optim.Adam(model.parameters(), learning_rate=cfg["learning_rate"])
 loss_fn = nn.MSELoss()
 

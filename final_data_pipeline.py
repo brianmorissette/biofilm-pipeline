@@ -36,7 +36,7 @@ class ImageLabelDataset(Dataset):
 # -----------------------------
 # Build (img,label) pairs from raw images (biofilm, release)
 # -----------------------------
-def _build_pairs(raw_pairs, threshold_method, patch_size, stride_multiplier):
+def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier):
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
     for biofilm, release in raw_pairs:
@@ -53,8 +53,13 @@ def _build_pairs(raw_pairs, threshold_method, patch_size, stride_multiplier):
 
     # 2) extract patches + rotations (original + 90/180/270)
     samples = []
+    if patch_method == "robust":
+        extract_func = extract_patches_robust
+    else:
+        extract_func = extract_patches
+
     for release, biofilm_label in pre_patch_pairs:
-        for patch in extract_patches(release, patch_size=patch_size, stride_multiplier=stride_multiplier):
+        for patch in extract_func(release, patch_size=patch_size, stride_multiplier=stride_multiplier):
             samples.append((patch, biofilm_label))
             samples.append((rotate_image_90(patch),  biofilm_label))
             samples.append((rotate_image_180(patch), biofilm_label))
@@ -96,12 +101,14 @@ def get_dataloaders(root, cfg):
     train_samples = _build_pairs(
         raw_pairs=train_raw,
         threshold_method=cfg["threshold_method"],
+        patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
     )
     validation_samples = _build_pairs(
         raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
+        patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
     )
@@ -133,6 +140,7 @@ if __name__ == "__main__":
         root="raw_data_reorganized",
         cfg={
             "batch_size": 32,
+            "patch_method": "robust",
             "patch_size": 128,
             "stride_multiplier": 1,
             "threshold_method": "iterative",

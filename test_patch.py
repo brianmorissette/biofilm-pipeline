@@ -4,12 +4,13 @@ from utils import *
 import matplotlib.pyplot as plt
 
 PATCH_SIZE = 128
-PATCH_STRIDE = 64
+PATCH_STRIDE_MULTIPLIER = 0.75
 
 release_image = load_images("raw_data_reorganized/release")[0]
+print(f"Release image shape: {release_image.shape}")
 grayscale_release = grayscale(release_image)
 normalized_release = normalize(grayscale_release)
-patches = extract_patches(normalized_release, patch_size=PATCH_SIZE, stride=PATCH_STRIDE)
+patches = extract_patches_robust(normalized_release, patch_size=PATCH_SIZE, stride_multiplier=PATCH_STRIDE_MULTIPLIER)
 
 
 

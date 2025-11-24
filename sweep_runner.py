@@ -10,7 +10,7 @@ from model_pipeline.training import train_one_epoch, evaluate
 def run(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
-    model = SurfaceAreaCNN(image_size=config.patch_size).to(device)
+    model = SurfaceAreaCNN(image_size=config.patch_size, first_layer_channels=config.first_layer_channels).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     loss_fn = nn.MSELoss()
     

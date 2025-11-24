@@ -4,25 +4,44 @@ import torch.nn.functional as F
 
 # ---- Tiny CNN for 1x128x128 → scalar ----
 class SurfaceAreaCNN(nn.Module):
-    def __init__(self, image_size=128):
+    def __init__(self, image_size=128, first_layer_channels=8):
         super().__init__()
         self.feat = nn.Sequential(
-            nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(1, first_layer_channels, 3, padding=1), nn.ReLU(),
             nn.MaxPool2d(2),                         # 64x64
-            nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(first_layer_channels, first_layer_channels * 2, 3, padding=1), nn.ReLU(),
             nn.MaxPool2d(2),                         # 32x32
-            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(first_layer_channels * 2, first_layer_channels * 4, 3, padding=1), nn.ReLU(),
             nn.MaxPool2d(2),                         # 16x16
         )
         self.head = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(64 * image_size // 8 * image_size // 8, 128), nn.ReLU(),
+            nn.Linear(first_layer_channels * 4 * image_size // 8 * image_size // 8, 128), nn.ReLU(),
             nn.Linear(128, 1),                     # regression output
         )
 
     def forward(self, x):
         return self.head(self.feat(x)).squeeze(-1)  # [B]
 
+class TinyCNN(nn.Module):
+    def __init__(self, image_size=128):
+        super().__init__()
+        self.feat = nn.Sequential(
+            nn.Conv2d(1, 8, 3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(2),                         # 64x64
+            nn.Conv2d(8, 16, 3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(2),                         # 32x32
+            nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(2),                         # 16x16
+        )
+        self.head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(32 * image_size // 8 * image_size // 8, 128), nn.ReLU(),
+            nn.Linear(128, 1),                     # regression output
+        )
+
+    def forward(self, x):
+        return self.head(self.feat(x)).squeeze(-1)  # [B]
 
 class FirstCNN(nn.Module):
     def __init__(self, in_channels=1, num_classes=1, image_size=28):
