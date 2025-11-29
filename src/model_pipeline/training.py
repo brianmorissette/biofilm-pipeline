@@ -31,3 +31,13 @@ def evaluate(model, loader, device, loss_fn):
     mse = total_sqerr / n
     rmse = math.sqrt(mse)
     return total_loss / n, total_mae / n, rmse
+
+def get_loss_fn(loss_fn_name):
+    if loss_fn_name == "MSELoss":
+        return nn.MSELoss()
+    elif loss_fn_name == "L1Loss":
+        return nn.L1Loss()
+    elif loss_fn_name == "HuberLoss":
+        return nn.HuberLoss()
+    else:
+        raise ValueError(f"Invalid loss function: {loss_fn_name}")

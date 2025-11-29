@@ -16,7 +16,19 @@ def get_biofilm_label(image,threshold, label):
 
 
 def get_surface_area(image, threshold):
-    return np.sum(image > threshold) * 1.13 * 1.13 # 1.13x1.13 is the pixel size in microns  
+    """Calculate the biofilm surface area in square microns."""
+    return np.sum(image > threshold) * 1.13 * 1.13  # 1.13x1.13 is the pixel size in microns  
+
+def normalize_labels(labels):
+    """
+    Normalize an array-like of labels to [0, 1].
+    """
+    labels = np.array(labels, dtype=np.float32)
+    min_val = labels.min()
+    max_val = labels.max()
+    if max_val - min_val == 0:
+        return np.zeros_like(labels)
+    return (labels - min_val) / (max_val - min_val)
 
 
 def preprocess_biofilm(image, clip_limit=2.0, tile_size=(8, 8), blur_ksize=(5, 5)):

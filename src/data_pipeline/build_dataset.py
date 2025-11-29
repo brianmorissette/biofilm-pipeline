@@ -39,6 +39,7 @@ class ImageLabelDataset(Dataset):
 def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier):
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
+    all_labels = []
     for biofilm, release in raw_pairs:
         # release → grayscale + normalize
         grayscale_release = grayscale(release)
@@ -48,8 +49,11 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
         preprocessed_biofilm = preprocess_biofilm(biofilm)
         threshold = threshold_image(preprocessed_biofilm, threshold_method=threshold_method)
         biofilm_label = get_biofilm_label(preprocessed_biofilm, threshold, label="surface area")
+        all_labels.append(biofilm_label)
 
-        pre_patch_pairs.append((normalized_release, biofilm_label))
+    # normalize the labels 0-1
+    normalized_labels = normalize_labels(all_labels)
+    pre_patch_pairs = [(normalized_release, normalized_label) for normalized_release, normalized_label in pre_patch_pairs]
 
     # 2) extract patches + rotations (original + 90/180/270)
     samples = []

@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+# Add src to path so imports work
+src_path = Path(__file__).parent / "src"
+sys.path.insert(0, str(src_path))
+
 from data_pipeline.release_preprocess import *
 from data_pipeline.biofilm_preprocess import *
 from utils import *

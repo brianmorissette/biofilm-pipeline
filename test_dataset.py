@@ -7,8 +7,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from data_loading.biofilm_preprocess import *
-from data_loading.release_preprocess import *
+from data_pipeline.biofilm_preprocess import *
+from data_pipeline.release_preprocess import *
 from utils import *
 
 # -----------------------------

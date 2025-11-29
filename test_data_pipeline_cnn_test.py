@@ -4,7 +4,15 @@ import math
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import sys
+from pathlib import Path
+
+# Add src to path so imports work
+src_path = Path(__file__).parent / "src"
+sys.path.insert(0, str(src_path))
+
 from final_data_pipeline import get_dataloaders
+
 
 # ---- Tiny CNN for 1x128x128 → scalar ----
 class SurfaceAreaCNN(nn.Module):
