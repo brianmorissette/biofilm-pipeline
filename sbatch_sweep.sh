@@ -16,5 +16,5 @@ SBATCH --mem=64gb
 # Get a node for more general use.
 
 # Run a python program using our local virtual environment
-cd /home/bfmorissette/biofilm-pipeline/src
+cd /home/bfmorissette/biofilm-pipeline
 /home/bfmorissette/.local/bin/uv run wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/qccbigqv --count 100
