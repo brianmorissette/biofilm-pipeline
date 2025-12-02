@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # The partition we want (short==24 hours, long=7 days)
-SBATCH --partition=short
+#SBATCH --partition=short
 # One node
-SBATCH -N 1
+#SBATCH -N 1
 # One job on that node
-SBATCH -n 1
+#SBATCH -n 1
 # Request 4 CPU Cores
-SBATCH -c 4
+#SBATCH -c 4
 # Please give me a GPU
-SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:2
 # Ask for memory
-SBATCH --mem=64gb
+#SBATCH --mem=64gb
 
 # Get a node for more general use.
 
