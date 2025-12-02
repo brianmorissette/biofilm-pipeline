@@ -2,37 +2,43 @@ method: bayes
 metric: 
   name: validation/rmse
   goal: minimize
-
 parameters:
   # Data pipeline parameters
   patch_method:
     values: ["robust", "standard"]
   patch_size:
-    values: [64, 128]
+    values: [64, 128, 192]
   stride_multiplier:
     values: [1, 0.5]
   threshold_method:
     values: ["iterative"]
-  # Model pipeline parameters
+  transform:
+    values: ["none", "none", "none", "fft_dct"]
+
+  # Model Architecture parameters
   first_layer_channels:
-    values: [8, 16]
-  # Training parameters
+    values: [8, 16, 24]
+
+  # Model Training parameters
   epochs:
-    values: [50]
+    value: 100
   learning_rate:
     distribution: log_uniform_values
-    min: 1e-4
-    max: 1e-2
+    min: 1e-6
+    max: 0.5e-4
   batch_size:
-    values: [8, 16, 32]
+    values: [8, 16, 32, 64]
   loss_fn:
     values: ["MSELoss", "L1Loss"]
+
+  # Model Regularization parameters
   dropout:
     values: [0.2, 0.4] # 0.5 is very aggressive, good for small data
   weight_decay:
     distribution: log_uniform_values
     min: 0.00001
     max: 0.01      # Higher decay penalizes complex models more
+
 program: src/sweep_runner.py
 project: biofilm-pipeline-sweep
 

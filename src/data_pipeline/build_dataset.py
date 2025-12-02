@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 # local preprocessing utilities
 from data_pipeline.release_preprocess import *
 from data_pipeline.biofilm_preprocess import *
+from data_pipeline.transforms import *
 from utils import *
 
 
@@ -36,14 +37,16 @@ class ImageLabelDataset(Dataset):
 # -----------------------------
 # Build (img,label) pairs from raw images (biofilm, release)
 # -----------------------------
-def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier):
+def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier, transform):
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
+    all_release = []
     all_labels = []
     for biofilm, release in raw_pairs:
         # release → grayscale + normalize
         grayscale_release = grayscale(release)
         normalized_release = normalize(grayscale_release)
+        all_release.append(normalized_release)
 
         # biofilm → preprocess + threshold + label (surface area)
         preprocessed_biofilm = preprocess_biofilm(biofilm)
@@ -53,7 +56,8 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
 
     # normalize the labels 0-1
     normalized_labels = normalize_labels(all_labels)
-    pre_patch_pairs = [(normalized_release, normalized_label) for normalized_release, normalized_label in pre_patch_pairs]
+    
+    pre_patch_pairs = list(zip(all_release, normalized_labels))
 
     # 2) extract patches + rotations (original + 90/180/270)
     samples = []
@@ -68,6 +72,11 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
             samples.append((rotate_image_90(patch),  biofilm_label))
             samples.append((rotate_image_180(patch), biofilm_label))
             samples.append((rotate_image_270(patch), biofilm_label))
+
+    # apply transform
+    if transform != "none":
+        samples = [(get_transform(image, transform), label) for image, label in samples]
+    
     return samples
 
 
@@ -108,6 +117,7 @@ def get_dataloaders(root, cfg):
         patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
+        transform=cfg["transform"],
     )
     validation_samples = _build_pairs(
         raw_pairs=validation_raw,
@@ -115,26 +125,31 @@ def get_dataloaders(root, cfg):
         patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
+        transform=cfg["transform"],
     )
 
     # wrap in ImageLabelDataset
     train_samples = ImageLabelDataset(train_samples)
     validation_samples = ImageLabelDataset(validation_samples)
 
+    # use pin memory if available
+    use_pin_memory = torch.cuda.is_available()
+    num_workers = 0 if use_pin_memory else 2
+
     # create DataLoaders
     train_loader = DataLoader(
         train_samples,
         batch_size=cfg["batch_size"],
         shuffle=True,
-        num_workers=0,
-        pin_memory=False,
+        num_workers=num_workers,
+        pin_memory=use_pin_memory,
     )
     validation_loader = DataLoader(
         validation_samples,
         batch_size=cfg["batch_size"],
         shuffle=False,
-        num_workers=0,
-        pin_memory=False,
+        num_workers=num_workers,
+        pin_memory=use_pin_memory,
     )
     return train_loader, validation_loader
 
@@ -148,5 +163,6 @@ if __name__ == "__main__":
             "patch_size": 128,
             "stride_multiplier": 1,
             "threshold_method": "iterative",
+            "transform": "none",
         },
     )

@@ -44,10 +44,16 @@ def extract_patches_robust(image, patch_size, stride_multiplier, pad_mode='refle
     
     # 2. Extract windows using efficient array views
     # Output shape: (n_rows, n_cols, patch_h, patch_w)
-    windows = view_as_windows(image_padded, patch_size, step=stride)
+    # Note: view_as_windows expects window_shape to be tuple if input is > 1D
+    if isinstance(patch_size, int):
+        patch_shape = (patch_size, patch_size)
+    else:
+        patch_shape = patch_size
+        
+    windows = view_as_windows(image_padded, patch_shape, step=stride)
     
     # 3. Flatten into a list of patches: (N, patch_h, patch_w)
-    patches = windows.reshape(-1, patch_size, patch_size)
+    patches = windows.reshape(-1, patch_shape[0], patch_shape[1])
     
     return patches
 

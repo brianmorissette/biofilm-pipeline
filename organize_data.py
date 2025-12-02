@@ -130,8 +130,8 @@ def reorganize_raw_data_paired(source_dir, output_dir, dry_run=True):
 
 if __name__ == "__main__":
     # Configure paths
-    source_directory = "/Users/bmorissette/Documents/biofilm-pipeline/raw_data"
-    output_directory = "/Users/bmorissette/Documents/biofilm-pipeline/raw_data_reorganized"
+    source_directory = "/Users/bmorissette/Documents/biofilm-pipeline/data/raw_data"
+    output_directory = "/Users/bmorissette/Documents/biofilm-pipeline/data/raw_data_reorganized"
     
     # First, run with dry_run=True to see what will happen
     print("=== DRY RUN ===\n")
