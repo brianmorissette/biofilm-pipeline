@@ -16,6 +16,10 @@ def grayscale(image) -> np.ndarray:
 def normalize(image) -> np.ndarray:
     return image / np.max(image)
 
+def get_label_min_max(samples):
+    labels = np.array([sample[1] for sample in samples])
+    return float(np.min(labels)), float(np.max(labels))
+
 def display_image(image) -> None:
     plt.imshow(image)
     plt.axis('off')

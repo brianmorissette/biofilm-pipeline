@@ -30,7 +30,6 @@ def normalize_labels(labels):
         return np.zeros_like(labels)
     return (labels - min_val) / (max_val - min_val)
 
-
 def preprocess_biofilm(image, clip_limit=2.0, tile_size=(8, 8), blur_ksize=(5, 5)):
     if len(image.shape) == 3 and image.shape[2] == 3:
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -47,7 +46,6 @@ def preprocess_biofilm(image, clip_limit=2.0, tile_size=(8, 8), blur_ksize=(5, 5
         dtype=cv2.CV_8U)
     preprocessed_image = cv2.GaussianBlur(normalized_image, blur_ksize, 0)
     return preprocessed_image
-
 
 def iterative_threshold(image):
     iteration_count = 0

@@ -13,7 +13,7 @@ parameters:
   threshold_method:
     values: ["iterative"]
   transform:
-    values: ["none", "none", "none", "fft_dct"]
+    values: ["none", "fft_dct"]
 
   # Model Architecture parameters
   first_layer_channels:

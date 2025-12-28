@@ -10,30 +10,6 @@ from data_pipeline.biofilm_preprocess import *
 from data_pipeline.transforms import *
 from utils import *
 
-
-# -----------------------------
-# Dataset: wraps (img, label) pairs for a CNN
-# -----------------------------
-class ImageLabelDataset(Dataset):
-    def __init__(self, samples):
-        # samples: list of (np.ndarray(H,W) float in [0,1], float)
-        self.samples = samples
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, i):
-        img, y = self.samples[i]
-        # ensure single-channel, channel-first (1,H,W)
-        if img.ndim == 2:
-            img = img[None, ...]
-        elif img.ndim == 3 and img.shape[-1] == 1:
-            img = np.transpose(img, (2, 0, 1))
-        x = torch.from_numpy(img.astype(np.float32))   # image → float32 tensor
-        y = torch.tensor(y, dtype=torch.float32)       # label → float32 tensor (regression)
-        return x, y
-
-
 # -----------------------------
 # Build (img,label) pairs from raw images (biofilm, release)
 # -----------------------------
@@ -79,6 +55,27 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
     
     return samples
 
+# -----------------------------
+# Dataset: wraps (img, label) pairs for a CNN
+# -----------------------------
+class ImageLabelDataset(Dataset):
+    def __init__(self, samples):
+        # samples: list of (np.ndarray(H,W) float in [0,1], float)
+        self.samples = samples
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, i):
+        img, y = self.samples[i]
+        # ensure single-channel, channel-first (1,H,W)
+        if img.ndim == 2:
+            img = img[None, ...]
+        elif img.ndim == 3 and img.shape[-1] == 1:
+            img = np.transpose(img, (2, 0, 1))
+        x = torch.from_numpy(img.astype(np.float32))   # image → float32 tensor
+        y = torch.tensor(y, dtype=torch.float32)       # label → float32 tensor (regression)
+        return x, y
 
 # -----------------------------
 # Public: split by original image FIRST, then build/augment per split
@@ -127,10 +124,19 @@ def get_dataloaders(root, cfg):
         stride_multiplier=cfg["stride_multiplier"],
         transform=cfg["transform"],
     )
+    test_samples = _build_pairs(
+        raw_pairs=test_raw,
+        threshold_method=cfg["threshold_method"],
+        patch_method=cfg["patch_method"],
+        patch_size=cfg["patch_size"],
+        stride_multiplier=cfg["stride_multiplier"],
+        transform=cfg["transform"],
+    )
 
     # wrap in ImageLabelDataset
     train_samples = ImageLabelDataset(train_samples)
     validation_samples = ImageLabelDataset(validation_samples)
+    test_samples = ImageLabelDataset(test_samples)
 
     # use pin memory if available
     use_pin_memory = torch.cuda.is_available()
@@ -151,11 +157,18 @@ def get_dataloaders(root, cfg):
         num_workers=num_workers,
         pin_memory=use_pin_memory,
     )
-    return train_loader, validation_loader
+    test_loader = DataLoader(
+        test_samples,
+        batch_size=cfg["batch_size"],
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=use_pin_memory,
+    )
+    return train_loader, validation_loader, test_loader
 
 
 if __name__ == "__main__":
-    train_loader, validation_loader = get_dataloaders(
+    train_loader, validation_loader, test_loader = get_dataloaders(
         root="raw_data_reorganized",
         cfg={
             "batch_size": 32,

@@ -17,4 +17,4 @@
 
 # Run a python program using our local virtual environment
 cd /home/bfmorissette/biofilm-pipeline
-/home/bfmorissette/.local/bin/uv run -- wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/qccbigqv --count 100
+/home/bfmorissette/.local/bin/uv run -- wandb agent brianmorissette-worcester-polytechnic-institute/biofilm-pipeline-sweep/anvnxlq3 --count 100

@@ -32,6 +32,57 @@ def evaluate(model, loader, device, loss_fn):
     rmse = math.sqrt(mse)
     return total_loss / n, total_mae / n, rmse
 
+@torch.no_grad()
+def evaluate_v2(model, loader, device, loss_fn, label_min=None, label_max=None):
+    model.eval()
+    total_loss = 0.0
+    
+    # We will store all denormalized predictions and actuals to calculate MAPE and R2
+    all_preds_microns = []
+    all_targets_microns = []
+    
+    n = 0
+    for x, y in loader:
+        x, y = x.to(device), y.to(device)
+        pred = model(x)
+        
+        # 1. Calculate Loss on NORMALIZED data (for the optimizer/math)
+        loss = loss_fn(pred, y)
+        total_loss += loss.item() * x.size(0)
+        
+        # 2. Denormalize to Microns (for human interpretation)
+        # If no min/max provided, we stay in normalized space (0-1)
+        if label_min is not None and label_max is not None:
+            pred_microns = pred * (label_max - label_min) + label_min
+            target_microns = y * (label_max - label_min) + label_min
+        else:
+            pred_microns, target_microns = pred, y
+
+        all_preds_microns.append(pred_microns.cpu())
+        all_targets_microns.append(target_microns.cpu())
+        n += x.size(0)
+
+    # Concatenate all batches
+    all_preds_microns = torch.cat(all_preds_microns)
+    all_targets_microns = torch.cat(all_targets_microns)
+
+    # 3. Calculate Interpretable Metrics
+    abs_error = torch.abs(all_preds_microns - all_targets_microns)
+    
+    mae_microns = abs_error.mean().item()
+    rmse_microns = torch.sqrt(torch.square(abs_error).mean()).item()
+    
+    # MAPE: Mean Absolute Percentage Error (The "off by X%" metric)
+    # Added 1e-7 to avoid division by zero if a target is 0
+    mape = (abs_error / (all_targets_microns + 1e-7)).mean().item() * 100
+
+    return {
+        "loss": total_loss / n,           # Normalized (for math)
+        "mae_microns": mae_microns,       # Actual Microns
+        "rmse_microns": rmse_microns,     # Actual Microns
+        "mape_pct": mape                  # Percentage
+    }
+
 def get_loss_fn(loss_fn_name):
     if loss_fn_name == "MSELoss":
         return nn.MSELoss()
