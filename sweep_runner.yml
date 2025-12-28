@@ -1,6 +1,6 @@
 method: bayes
 metric: 
-  name: validation/rmse
+  name: validation/mape
   goal: minimize
 parameters:
   # Data pipeline parameters

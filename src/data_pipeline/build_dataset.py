@@ -13,7 +13,7 @@ from utils import *
 # -----------------------------
 # Build (img,label) pairs from raw images (biofilm, release)
 # -----------------------------
-def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier, transform):
+def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier, transform, label_min=None, label_max=None):
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
     all_release = []
@@ -31,7 +31,7 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
         all_labels.append(biofilm_label)
 
     # normalize the labels 0-1
-    normalized_labels = normalize_labels(all_labels)
+    normalized_labels, label_min, label_max = normalize_labels(all_labels, min_val=label_min, max_val=label_max)
     
     pre_patch_pairs = list(zip(all_release, normalized_labels))
 
@@ -53,7 +53,7 @@ def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_m
     if transform != "none":
         samples = [(get_transform(image, transform), label) for image, label in samples]
     
-    return samples
+    return samples, label_min, label_max
 
 # -----------------------------
 # Dataset: wraps (img, label) pairs for a CNN
@@ -108,7 +108,7 @@ def get_dataloaders(root, cfg):
     )
 
     # build (img,label) samples for each split
-    train_samples = _build_pairs(
+    train_samples, train_min, train_max = _build_pairs(
         raw_pairs=train_raw,
         threshold_method=cfg["threshold_method"],
         patch_method=cfg["patch_method"],
@@ -116,21 +116,27 @@ def get_dataloaders(root, cfg):
         stride_multiplier=cfg["stride_multiplier"],
         transform=cfg["transform"],
     )
-    validation_samples = _build_pairs(
+    
+    # Use Training Min/Max for Validation and Test
+    validation_samples, _, _ = _build_pairs(
         raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
         patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
         transform=cfg["transform"],
+        label_min=train_min,
+        label_max=train_max
     )
-    test_samples = _build_pairs(
+    test_samples, _, _ = _build_pairs(
         raw_pairs=test_raw,
         threshold_method=cfg["threshold_method"],
         patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
         stride_multiplier=cfg["stride_multiplier"],
         transform=cfg["transform"],
+        label_min=train_min,
+        label_max=train_max
     )
 
     # wrap in ImageLabelDataset
@@ -164,7 +170,7 @@ def get_dataloaders(root, cfg):
         num_workers=num_workers,
         pin_memory=use_pin_memory,
     )
-    return train_loader, validation_loader, test_loader
+    return train_loader, validation_loader, test_loader, train_min, train_max
 
 
 if __name__ == "__main__":

@@ -33,14 +33,11 @@ def run(config):
     project_root = Path(__file__).parent.parent
     data_root = project_root / "data" / "raw_data_reorganized"
         
-    train_loader, validation_loader, test_loader = get_dataloaders(root=str(data_root), cfg=config)
+    train_loader, validation_loader, test_loader, val_label_min, val_label_max = get_dataloaders(root=str(data_root), cfg=config)
 
     # print dataloader sizes
     print(f"Train batches: {len(train_loader)}, Validation batches: {len(validation_loader)}")
     print(f"Train samples: {len(train_loader.dataset)}, Validation samples: {len(validation_loader.dataset)}, Test samples: {len(test_loader.dataset)}")
-    
-    # get label min and max for denormalization before human interpretation evaluation metrics
-    val_label_min, val_label_max = get_label_min_max(train_loader.dataset.samples)
     
     # train and evaluatethe model
     for epoch in range(1, config.epochs + 1):
