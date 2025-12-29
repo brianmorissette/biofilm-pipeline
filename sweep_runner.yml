@@ -38,7 +38,7 @@ parameters:
     max: 0.01      # Higher decay penalizes complex models more
 
 program: src/sweep_runner.py
-project: biofilm-pipeline-sweep-v2
+project: biofilm-pipeline-sweep-v3
 
 
 
