@@ -5,62 +5,101 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
 # local preprocessing utilities
-from data_pipeline.release_preprocess import *
-from data_pipeline.biofilm_preprocess import *
-from data_pipeline.transforms import *
-from utils import *
+from data_pipeline.release_preprocess import (
+    extract_patches_auto,
+    rotate_image_90,
+    rotate_image_180,
+    rotate_image_270,
+    transform_image,
+)
+from data_pipeline.biofilm_preprocess import (
+    preprocess_biofilm,
+    threshold_image,
+    get_biofilm_label,
+    normalize_labels,
+)
+from utils import grayscale, normalize_image, load_images
 
-# -----------------------------
-# Build (img,label) pairs from raw images (biofilm, release)
-# -----------------------------
-def _build_pairs(raw_pairs, threshold_method, patch_method, patch_size, stride_multiplier, transform, label_min=None, label_max=None):
+
+def _build_pairs(
+    raw_pairs,
+    threshold_method,
+    patch_size,
+    target_overlap,
+    transform_name,
+    label_min=None,
+    label_max=None,
+):
+    """
+    Builds (image, label) pairs from raw images (biofilm, release).
+
+    Args:
+        raw_pairs: List of (biofilm, release) image tuples.
+        threshold_method: Method for thresholding biofilm images.
+        patch_size: Size of the patches.
+        target_overlap: Target overlap for patch extraction.
+        transform_name: Transform to apply to images.
+        label_min: Minimum label value for normalization (optional).
+        label_max: Maximum label value for normalization (optional).
+
+    Returns:
+        Tuple of (samples, label_min, label_max), where samples is a list of (patch, label) tuples.
+    """
     # 1) per-image preprocessing + label (no patches yet)
     pre_patch_pairs = []
     all_release = []
     all_labels = []
     for biofilm, release in raw_pairs:
-        # release → grayscale + normalize
+        # release -> grayscale + normalize
         grayscale_release = grayscale(release)
-        normalized_release = normalize(grayscale_release)
+        normalized_release = normalize_image(grayscale_release)
         all_release.append(normalized_release)
 
-        # biofilm → preprocess + threshold + label (surface area)
+        # biofilm -> preprocess + threshold + label (surface area)
         preprocessed_biofilm = preprocess_biofilm(biofilm)
-        threshold = threshold_image(preprocessed_biofilm, threshold_method=threshold_method)
-        biofilm_label = get_biofilm_label(preprocessed_biofilm, threshold, label="surface area")
+        threshold = threshold_image(
+            preprocessed_biofilm, threshold_method=threshold_method
+        )
+        biofilm_label = get_biofilm_label(
+            preprocessed_biofilm, threshold, label="surface area"
+        )
         all_labels.append(biofilm_label)
 
     # normalize the labels 0-1
-    normalized_labels, label_min, label_max = normalize_labels(all_labels, min_val=label_min, max_val=label_max)
-    
+    normalized_labels, label_min, label_max = normalize_labels(
+        all_labels, min_val=label_min, max_val=label_max
+    )
+
     pre_patch_pairs = list(zip(all_release, normalized_labels))
 
     # 2) extract patches + rotations (original + 90/180/270)
     samples = []
-    if patch_method == "robust":
-        extract_func = extract_patches_robust
-    else:
-        extract_func = extract_patches
-
     for release, biofilm_label in pre_patch_pairs:
-        for patch in extract_func(release, patch_size=patch_size, stride_multiplier=stride_multiplier):
+        for patch in extract_patches_auto(
+            release, patch_size=patch_size, target_overlap=target_overlap
+        ):
             samples.append((patch, biofilm_label))
-            samples.append((rotate_image_90(patch),  biofilm_label))
+            samples.append((rotate_image_90(patch), biofilm_label))
             samples.append((rotate_image_180(patch), biofilm_label))
             samples.append((rotate_image_270(patch), biofilm_label))
 
     # apply transform
-    if transform != "none":
-        samples = [(get_transform(image, transform), label) for image, label in samples]
-    
+    if transform_name != "none":
+        samples = [(transform_image(image, transform_name), label) for image, label in samples]
+
     return samples, label_min, label_max
 
-# -----------------------------
-# Dataset: wraps (img, label) pairs for a CNN
-# -----------------------------
+
 class ImageLabelDataset(Dataset):
+    """
+    Dataset wrapper for (image, label) pairs, preparing for CNN.
+    """
+
     def __init__(self, samples):
-        # samples: list of (np.ndarray(H,W) float in [0,1], float)
+        """
+        Args:
+            samples: list of (np.ndarray(H,W) float in [0,1], float)
+        """
         self.samples = samples
 
     def __len__(self):
@@ -73,24 +112,31 @@ class ImageLabelDataset(Dataset):
             img = img[None, ...]
         elif img.ndim == 3 and img.shape[-1] == 1:
             img = np.transpose(img, (2, 0, 1))
-        x = torch.from_numpy(img.astype(np.float32))   # image → float32 tensor
-        y = torch.tensor(y, dtype=torch.float32)       # label → float32 tensor (regression)
+        x = torch.from_numpy(img.astype(np.float32))  # image -> float32 tensor
+        y = torch.tensor(y, dtype=torch.float32)  # label -> float32 tensor (regression)
         return x, y
 
-# -----------------------------
-# Public: split by original image FIRST, then build/augment per split
-# -----------------------------
+
 def get_dataloaders(root, cfg):
     """
     Build train/test DataLoaders with leakage-free split:
     split on original images first, then patch/augment within each split.
+
+    Args:
+        root: Root directory containing 'biofilm' and 'release' folders.
+        cfg: Configuration dictionary containing hyperparameters.
+
+    Returns:
+        Tuple of (train_loader, validation_loader, test_loader, train_min, train_max).
     """
     # load paired raw images
     biofilm_dir = f"{root}/biofilm"
     release_dir = f"{root}/release"
     biofilm_images = load_images(biofilm_dir)
     release_images = load_images(release_dir)
-    raw_pairs = list(zip(biofilm_images, release_images))  # [(biofilm_img, release_img), ...]
+    raw_pairs = list(
+        zip(biofilm_images, release_images)
+    )  # [(biofilm_img, release_img), ...]
 
     # train/test split at image level (pre-augmentation)
     train_raw, test_raw = train_test_split(
@@ -111,32 +157,29 @@ def get_dataloaders(root, cfg):
     train_samples, train_min, train_max = _build_pairs(
         raw_pairs=train_raw,
         threshold_method=cfg["threshold_method"],
-        patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
-        stride_multiplier=cfg["stride_multiplier"],
-        transform=cfg["transform"],
+        target_overlap=cfg["target_overlap"],
+        transform_name=cfg["transform_name"],
     )
-    
+
     # Use Training Min/Max for Validation and Test
     validation_samples, _, _ = _build_pairs(
         raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
-        patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
-        stride_multiplier=cfg["stride_multiplier"],
-        transform=cfg["transform"],
+        target_overlap=cfg["target_overlap"],
+        transform_name=cfg["transform_name"],
         label_min=train_min,
-        label_max=train_max
+        label_max=train_max,
     )
     test_samples, _, _ = _build_pairs(
         raw_pairs=test_raw,
         threshold_method=cfg["threshold_method"],
-        patch_method=cfg["patch_method"],
         patch_size=cfg["patch_size"],
-        stride_multiplier=cfg["stride_multiplier"],
-        transform=cfg["transform"],
+        target_overlap=cfg["target_overlap"],
+        transform_name=cfg["transform_name"],
         label_min=train_min,
-        label_max=train_max
+        label_max=train_max,
     )
 
     # wrap in ImageLabelDataset
@@ -178,10 +221,9 @@ if __name__ == "__main__":
         root="raw_data_reorganized",
         cfg={
             "batch_size": 32,
-            "patch_method": "robust",
             "patch_size": 128,
-            "stride_multiplier": 1,
+            "target_overlap": 0.25,
             "threshold_method": "iterative",
-            "transform": "none",
+            "transform_name": "none",
         },
     )

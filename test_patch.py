@@ -1,60 +1,77 @@
 import sys
 from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Add src to path so imports work
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from data_pipeline.release_preprocess import *
-from data_pipeline.biofilm_preprocess import *
-from utils import *
-import matplotlib.pyplot as plt
+from data_pipeline.release_preprocess import extract_patches, extract_patches_robust, extract_patches_auto
+from utils import load_images, grayscale, normalize_image, display_grid_of_images, display_image
 
-PATCH_SIZE = 128
-PATCH_STRIDE_MULTIPLIER = 0.75
+def test_patching_strategies():
+    # Load images
+    # Try different paths where data might be
+    possible_paths = [
+        Path("data/raw_data_reorganized/release"),
+        Path("raw_data_reorganized/release")
+    ]
+    
+    image_dir = None
+    for p in possible_paths:
+        if p.exists():
+            image_dir = p
+            break
+            
+    if image_dir is None:
+        print("Error: Could not find release images directory.")
+        return
+    
+    print(f"Loading images from {image_dir}...")
+    images = load_images(image_dir)
+    if not images:
+        print("No images found.")
+        return
 
-release_image = load_images("raw_data_reorganized/release")[0]
-print(f"Release image shape: {release_image.shape}")
-grayscale_release = grayscale(release_image)
-normalized_release = normalize(grayscale_release)
-patches = extract_patches_robust(normalized_release, patch_size=PATCH_SIZE, stride_multiplier=PATCH_STRIDE_MULTIPLIER)
+    # Use the first image
+    original_image = images[0]
+    
+    # Preprocess
+    # Release images are typically green channel (index 1) in this dataset
+    gray_image = grayscale(original_image)
+    norm_image = normalize_image(gray_image)
+    
+    print(f"Image shape: {original_image.shape}")
+    print(f"Normalized shape: {norm_image.shape}")
 
+    # Strategies to test
+    strategies = [
+        ("Auto Patching (25% Overlap)", extract_patches_auto, {"patch_size": 160, "target_overlap": 0.25}),
+        ("Auto Patching (10% Overlap)", extract_patches_auto, {"patch_size": 160, "target_overlap": 0.1}),
+        ("Auto Patching (0% Overlap)", extract_patches_auto, {"patch_size": 160, "target_overlap": 0.0}),
+        ("Auto Patching (0% Overlap)", extract_patches_auto, {"patch_size": 80, "target_overlap": 0.25}),
+        ("Auto Patching (0% Overlap)", extract_patches_auto, {"patch_size": 80, "target_overlap": 0.1}),
+        ("Auto Patching (0% Overlap)", extract_patches_auto, {"patch_size": 80, "target_overlap": 0.0}),
+    ]
+    
+    for name, func, kwargs in strategies:
+        print(f"\n--- Testing: {name} ---")
+        patches = func(norm_image, **kwargs)
+        print(f"Extracted {len(patches)} patches.")
+        
+        # Display Original
+        print("Displaying Original Image...")
+        plt.figure(figsize=(6, 6))
+        plt.title(f"Original Image (for {name})")
+        plt.imshow(norm_image, cmap='gray')
+        plt.axis("off")
+        plt.show()
+        
+        # Display Patches
+        print("Displaying Patches Grid...")
+        # display_grid_of_images creates its own figure and calls show()
+        display_grid_of_images(patches)
 
-
-
-# plot the normalized release image and the patches grid side by side
-fig, axes = plt.subplots(1, 2, figsize=(16, 8))
-
-# Display the normalized_release image
-axes[0].imshow(normalized_release)
-axes[0].set_title("Normalized Release Image")
-axes[0].axis('off')
-
-# Display the patches as a grid in axes[1]
-num_patches = len(patches)
-grid_size = int(np.ceil(np.sqrt(num_patches)))
-for i in range(num_patches):
-    row = i // grid_size
-    col = i % grid_size
-    # Create a subplot in the right axes using inset axes
-    ax_inset = axes[1].inset_axes([
-        (col / grid_size),
-        1 - ((row + 1) / grid_size),
-        1 / grid_size,
-        1 / grid_size
-    ])
-    ax_inset.imshow(patches[i])
-    ax_inset.axis('off')
-
-axes[1].set_title("Patches Grid")
-axes[1].axis('off')
-plt.tight_layout()
-plt.show()
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    test_patching_strategies()

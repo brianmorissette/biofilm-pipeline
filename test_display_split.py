@@ -8,9 +8,10 @@ sys.path.append(str(Path(__file__).parent / "src"))
 
 from utils import load_images, display_image_pairs
 
+
 def main():
     print("Loading images...")
-    
+
     # Define paths (adjust if your data structure is different)
     # Assuming data/raw_data_reorganized exists from previous context
     data_root = Path("data/raw_data_reorganized")
@@ -25,7 +26,9 @@ def main():
     biofilm_images = load_images(biofilm_dir)
     release_images = load_images(release_dir)
 
-    print(f"Loaded {len(biofilm_images)} biofilm images and {len(release_images)} release images.")
+    print(
+        f"Loaded {len(biofilm_images)} biofilm images and {len(release_images)} release images."
+    )
 
     if len(biofilm_images) != len(release_images):
         print("Warning: Number of images does not match! Truncating to shorter length.")
@@ -39,10 +42,12 @@ def main():
     # 70/20/10 Split
     # First split: 70% Train, 30% Temp (Val + Test)
     train_pairs, temp_pairs = train_test_split(pairs, test_size=0.3, random_state=42)
-    
+
     # Second split: Split the 30% Temp into 2/3 Validation (20% total) and 1/3 Test (10% total)
     # 0.2 / 0.3 = 0.66... -> Validation size in temp split
-    val_pairs, test_pairs = train_test_split(temp_pairs, test_size=1/3, random_state=42)
+    val_pairs, test_pairs = train_test_split(
+        temp_pairs, test_size=1 / 3, random_state=42
+    )
 
     print(f"\nSplit Sizes:")
     print(f"Train: {len(train_pairs)} ({len(train_pairs)/len(pairs)*100:.1f}%)")
@@ -51,13 +56,13 @@ def main():
 
     print("\nDisplaying Train Set Pairs...")
     display_image_pairs(train_pairs, num_pairs=min(10, len(train_pairs)))
-    
+
     print("\nDisplaying Validation Set Pairs...")
     display_image_pairs(val_pairs, num_pairs=min(10, len(val_pairs)))
 
     print("\nDisplaying Test Set Pairs...")
     display_image_pairs(test_pairs, num_pairs=min(10, len(test_pairs)))
 
+
 if __name__ == "__main__":
     main()
-

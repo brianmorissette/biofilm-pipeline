@@ -39,7 +39,3 @@ for release_image, biofilm_label in zip(release_images, biofilm_labels):
 
 print(biofilm_release_pairs[0][0])
 print(biofilm_release_pairs[0][1])
-
-
-
-

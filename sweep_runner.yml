@@ -4,16 +4,14 @@ metric:
   goal: minimize
 parameters:
   # Data pipeline parameters
-  patch_method:
-    values: ["robust", "standard"]
   patch_size:
-    values: [64, 128, 192]
-  stride_multiplier:
-    values: [1, 0.5]
+    values: [80, 120, 160]
+  target_overlap:
+    values: [0.0, 0.25]
   threshold_method:
     values: ["iterative"]
-  transform:
-    values: ["none", "fft_dct"]
+  transform_name:
+    values: ["none", "fft_dct", "mexican_hat"]
 
   # Model Architecture parameters
   first_layer_channels:

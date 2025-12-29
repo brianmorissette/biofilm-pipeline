@@ -3,48 +3,89 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def load_images(root) -> list[np.ndarray]:
-    paths = sorted(
-        [*Path(root).rglob("*.tif")],
-        key=lambda p: p.as_posix().casefold()
-    )
-    return [img for p in paths if (img := cv2.imread(str(p), cv2.IMREAD_UNCHANGED)) is not None]
-    
-def grayscale(image) -> np.ndarray:
-    return image[:,:,1]
 
-def normalize(image) -> np.ndarray:
+def load_images(root) -> list[np.ndarray]:
+    """
+    Loads all .tif images from the specified root directory and its subdirectories.
+
+    Args:
+        root: The root directory to search for images.
+
+    Returns:
+        A list of loaded images as numpy arrays.
+    """
+    paths = sorted([*Path(root).rglob("*.tif")], key=lambda p: p.as_posix().casefold())
+    return [
+        img
+        for p in paths
+        if (img := cv2.imread(str(p), cv2.IMREAD_UNCHANGED)) is not None
+    ]
+
+
+def grayscale(image) -> np.ndarray:
+    """
+    Extracts the green channel (index 1) from an image, assuming it represents grayscale info.
+
+    Args:
+        image: The input image (multi-channel).
+
+    Returns:
+        The single-channel image.
+    """
+    return image[:, :, 1]
+
+
+def normalize_image(image) -> np.ndarray:
+    """
+    Normalizes the image pixel values to range [0, 1].
+
+    Args:
+        image: The input image.
+
+    Returns:
+        The normalized image.
+    """
     return image / np.max(image)
 
-def get_label_min_max(samples):
-    labels = np.array([sample[1] for sample in samples])
-    return float(np.min(labels)), float(np.max(labels))
 
 def display_image(image) -> None:
+    """
+    Displays a single image using matplotlib.
+
+    Args:
+        image: The image to display.
+    """
     plt.imshow(image)
-    plt.axis('off')
+    plt.axis("off")
     plt.show()
 
+
 def display_grid_of_images(images) -> None:
+    """
+    Displays a grid of images.
+
+    Args:
+        images: A list of images to display.
+    """
     grid_size = int(np.ceil(np.sqrt(len(images))))
     plt.figure(figsize=(12, 12))
     for i in range(len(images)):
         plt.subplot(grid_size, grid_size, i + 1)
         plt.imshow(images[i])
-        plt.axis('off')
+        plt.axis("off")
     plt.tight_layout()
     plt.show()
 
-def rotate_image_90(image) -> np.ndarray:
-    return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-
-def rotate_image_180(image) -> np.ndarray:
-    return cv2.rotate(image, cv2.ROTATE_180)
-
-def rotate_image_270(image) -> np.ndarray:
-    return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 def display_image_pairs(pairs, num_pairs=None, pairs_per_row=5) -> None:
+    """
+    Displays pairs of biofilm and release images.
+
+    Args:
+        pairs: A list of tuples, where each tuple contains (biofilm_image, release_image).
+        num_pairs: The maximum number of pairs to display. If None, displays all.
+        pairs_per_row: Number of pairs to display per row.
+    """
     num_to_display = len(pairs)
     if num_pairs is not None:
         num_to_display = min(num_to_display, num_pairs)
@@ -64,7 +105,7 @@ def display_image_pairs(pairs, num_pairs=None, pairs_per_row=5) -> None:
 
     # Hide all axes first
     for ax in axes.flat:
-        ax.axis('off')
+        ax.axis("off")
 
     for i in range(num_to_display):
         # Calculate position in grid
@@ -83,5 +124,3 @@ def display_image_pairs(pairs, num_pairs=None, pairs_per_row=5) -> None:
 
     plt.tight_layout(pad=0.5)
     plt.show()
-
-

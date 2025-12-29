@@ -28,7 +28,9 @@ cfg = {
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SurfaceAreaCNN(image_size=cfg["patch_size"], first_layer_channels=cfg["first_layer_channels"]).to(device)
+model = SurfaceAreaCNN(
+    image_size=cfg["patch_size"], first_layer_channels=cfg["first_layer_channels"]
+).to(device)
 optimizer = torch.optim.Adam(model.parameters(), learning_rate=cfg["learning_rate"])
 loss_fn = nn.MSELoss()
 
@@ -36,14 +38,22 @@ train_loader, test_loader = get_dataloaders(root="raw_data_reorganized", cfg=cfg
 
 # Quick shape sanity-check
 xb, yb = next(iter(train_loader))
-assert xb.shape[1:] == (1, cfg["patch_size"], cfg["patch_size"]), f"Expected (1,{cfg['patch_size']},{cfg['patch_size']}), got {xb.shape[1:]}"
-print(f"Device: {device}, Train batches: {len(train_loader)}, Test batches: {len(test_loader)}")
+assert xb.shape[1:] == (
+    1,
+    cfg["patch_size"],
+    cfg["patch_size"],
+), f"Expected (1,{cfg['patch_size']},{cfg['patch_size']}), got {xb.shape[1:]}"
+print(
+    f"Device: {device}, Train batches: {len(train_loader)}, Test batches: {len(test_loader)}"
+)
 
 best_test_rmse = float("inf")
 for epoch in range(1, cfg["epochs"] + 1):
     train_mse = train_one_epoch(model, train_loader, device, optimizer, loss_fn)
     test_mse, test_mae, test_rmse = evaluate(model, test_loader, device, loss_fn)
-    print(f"Epoch {epoch:02d} | train MSE: {train_mse:.5f} | test MSE: {test_mse:.5f} | test MAE: {test_mae:.5f} | test RMSE: {test_rmse:.5f}")
+    print(
+        f"Epoch {epoch:02d} | train MSE: {train_mse:.5f} | test MSE: {test_mse:.5f} | test MAE: {test_mae:.5f} | test RMSE: {test_rmse:.5f}"
+    )
 
     if test_rmse < best_test_rmse:
         best_test_rmse = test_rmse
@@ -56,4 +66,3 @@ with torch.no_grad():
     print("Sample preds vs targets (first 8):")
     for i in range(min(8, len(pq))):
         print(f"  pred={pq[i].item():.4f}   target={yq[i].item():.4f}")
-
