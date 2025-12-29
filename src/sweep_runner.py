@@ -5,7 +5,7 @@ from pathlib import Path
 
 from data_pipeline.build_dataset import get_dataloaders
 from model_pipeline.models import SurfaceAreaCNN
-from model_pipeline.training import train_one_epoch, evaluate_v2, get_loss_fn
+from model_pipeline.training import train_one_epoch, evaluate_v2, get_loss_fn, evaluate_dataset_full_images
 
 
 def run(config):
@@ -33,7 +33,7 @@ def run(config):
     project_root = Path(__file__).parent.parent
     data_root = project_root / "data" / "raw_data_reorganized"
 
-    train_loader, validation_loader, test_loader, val_label_min, val_label_max = (
+    train_loader, validation_loader, test_loader, val_label_min, val_label_max, val_full_pairs, test_full_pairs = (
         get_dataloaders(root=str(data_root), cfg=config)
     )
 
@@ -61,6 +61,20 @@ def run(config):
         val_rmse_microns = metrics["rmse_microns"]
         val_mape_pct = metrics["mape_pct"]
 
+        # Full Image Evaluation
+        full_image_metrics = evaluate_dataset_full_images(
+            model,
+            val_full_pairs,
+            device,
+            loss_fn,
+            config,
+            label_min=val_label_min,
+            label_max=val_label_max,
+        )
+        val_full_loss = full_image_metrics["full_loss"]
+        val_full_mae = full_image_metrics["full_mae_microns"]
+        val_full_mape = full_image_metrics["full_mape_pct"]
+
         wandb.log(
             {
                 "epoch": epoch,
@@ -69,11 +83,14 @@ def run(config):
                 "validation/mae": val_mae_microns,
                 "validation/rmse": val_rmse_microns,
                 "validation/mape": val_mape_pct,
+                "validation/full_loss": val_full_loss,
+                "validation/full_mae": val_full_mae,
+                "validation/full_mape": val_full_mape,
             }
         )
 
         print(
-            f"Epoch {epoch:02d} | train/loss: {train_loss:.5f} | val/loss: {val_loss:.5f} | val/mae: {val_mae_microns:.5f} | val/rmse: {val_rmse_microns:.5f} | val/mape: {val_mape_pct:.5f}"
+            f"Epoch {epoch:02d} | train/loss: {train_loss:.5f} | val/loss: {val_loss:.5f} | val/mae: {val_mae_microns:.5f} | val/mape: {val_mape_pct:.5f} | val/full_loss: {val_full_loss:.5f} | val/full_mae: {val_full_mae:.5f} | val/full_mape: {val_full_mape:.5f}"
         )
 
 

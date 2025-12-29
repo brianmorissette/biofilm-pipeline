@@ -87,7 +87,7 @@ def _build_pairs(
     if transform_name != "none":
         samples = [(transform_image(image, transform_name), label) for image, label in samples]
 
-    return samples, label_min, label_max
+    return samples, label_min, label_max, pre_patch_pairs
 
 
 class ImageLabelDataset(Dataset):
@@ -154,7 +154,7 @@ def get_dataloaders(root, cfg):
     )
 
     # build (img,label) samples for each split
-    train_samples, train_min, train_max = _build_pairs(
+    train_samples, train_min, train_max, _ = _build_pairs(
         raw_pairs=train_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
@@ -163,7 +163,7 @@ def get_dataloaders(root, cfg):
     )
 
     # Use Training Min/Max for Validation and Test
-    validation_samples, _, _ = _build_pairs(
+    validation_samples, _, _, validation_full_pairs = _build_pairs(
         raw_pairs=validation_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
@@ -172,7 +172,7 @@ def get_dataloaders(root, cfg):
         label_min=train_min,
         label_max=train_max,
     )
-    test_samples, _, _ = _build_pairs(
+    test_samples, _, _, test_full_pairs = _build_pairs(
         raw_pairs=test_raw,
         threshold_method=cfg["threshold_method"],
         patch_size=cfg["patch_size"],
@@ -213,11 +213,11 @@ def get_dataloaders(root, cfg):
         num_workers=num_workers,
         pin_memory=use_pin_memory,
     )
-    return train_loader, validation_loader, test_loader, train_min, train_max
+    return train_loader, validation_loader, test_loader, train_min, train_max, validation_full_pairs, test_full_pairs
 
 
 if __name__ == "__main__":
-    train_loader, validation_loader, test_loader = get_dataloaders(
+    train_loader, validation_loader, test_loader, _, _, _, _ = get_dataloaders(
         root="raw_data_reorganized",
         cfg={
             "batch_size": 32,
