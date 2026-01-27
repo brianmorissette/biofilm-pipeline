@@ -22,7 +22,7 @@ class SurfaceAreaCNN(nn.Module):
         super().__init__()
         self.weight_decay = weight_decay
         self.feat = nn.Sequential(
-            nn.Conv2d(1, first_layer_channels, 3, padding=1),
+            nn.Conv2d(1, first_layer_channels, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Dropout2d(dropout) if dropout > 0 else nn.Identity(),
             nn.MaxPool2d(2),  # 64x64
@@ -156,5 +156,19 @@ class SimpleFeedForwardNN(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten input
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
+        x = self.fc2(x)
+        return x
+
+
+class myNN(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super().__init__()
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+
+        self.fc2 = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.relu(x)
         x = self.fc2(x)
         return x

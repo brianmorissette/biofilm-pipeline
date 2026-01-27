@@ -3,6 +3,10 @@ import shutil
 from pathlib import Path
 from collections import defaultdict
 
+# ------------------------------------------------------------------------------------------------
+# rclone script
+# rclone copy gdrive:"MQP Data" ./raw_data_new_ --drive-shared-with-me --include "*20x*100*" --include "*60x*160*" --progress
+# ------------------------------------------------------------------------------------------------
 
 def reorganize_raw_data_paired(source_dir, output_dir, dry_run=True):
     """
@@ -140,9 +144,9 @@ def reorganize_raw_data_paired(source_dir, output_dir, dry_run=True):
 
 if __name__ == "__main__":
     # Configure paths
-    source_directory = "/Users/bmorissette/Documents/biofilm-pipeline/data/raw_data"
+    source_directory = "data/raw_data_new_"
     output_directory = (
-        "/Users/bmorissette/Documents/biofilm-pipeline/data/raw_data_reorganized"
+        "data/raw_data_reorganized_new"
     )
 
     # First, run with dry_run=True to see what will happen
