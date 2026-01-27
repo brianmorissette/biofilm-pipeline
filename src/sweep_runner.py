@@ -31,7 +31,7 @@ def run(config):
 
     # Get dataloaders
     project_root = Path(__file__).parent.parent
-    data_root = project_root / "data" / "raw_data_reorganized"
+    data_root = project_root / "data" / "raw_data_reorganized_new"
 
     train_loader, validation_loader, test_loader, val_label_min, val_label_max, val_full_pairs, test_full_pairs = (
         get_dataloaders(root=str(data_root), cfg=config)
