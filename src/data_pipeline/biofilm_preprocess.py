@@ -8,18 +8,22 @@ def threshold_image(image, threshold_method):
 
     Args:
         image: The input image.
-        threshold_method: The method to use ("iterative").
+        threshold_method: The method to use ("iterative", "otsu", or "adaptive").
 
     Returns:
-        The threshold value.
+        For "iterative" and "otsu": the threshold value (int).
+        For "adaptive": the binary mask (uint8 array, 0 or 255).
 
     Raises:
         ValueError: If the threshold method is invalid.
     """
     if threshold_method == "iterative":
         return iterative_threshold(image)
-    else:
-        raise ValueError(f"Invalid threshold method: {threshold_method}")
+    if threshold_method == "otsu":
+        return otsu_threshold(image)
+    if threshold_method == "adaptive":
+        return adaptive_threshold(image)
+    raise ValueError(f"Invalid threshold method: {threshold_method}")
 
 
 def get_biofilm_label(image, threshold, label):
@@ -143,3 +147,54 @@ def iterative_threshold(image):
             mean_fg = np.mean(foreground_pixels)
         current_threshold = (mean_bg + mean_fg) / 2.0
     return int(round(current_threshold))
+
+
+def otsu_threshold(image):
+    """
+    Calculates an optimal threshold using Otsu's method.
+
+    Args:
+        image: Input image (grayscale, uint8 preferred).
+
+    Returns:
+        The calculated integer threshold.
+    """
+    if image.dtype != np.uint8:
+        image = cv2.normalize(
+            image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U
+        )
+    thresh_val, _ = cv2.threshold(
+        image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )
+    return int(thresh_val)
+
+
+def adaptive_threshold(
+    image,
+    block_size=11,
+    c=2,
+    method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+):
+    """
+    Applies adaptive thresholding to produce a binary mask.
+
+    Args:
+        image: Input image (grayscale).
+        block_size: Size of a pixel neighborhood (must be odd).
+        c: Constant subtracted from the mean or weighted sum.
+        method: cv2.ADAPTIVE_THRESH_GAUSSIAN_C or cv2.ADAPTIVE_THRESH_MEAN_C.
+
+    Returns:
+        Binary mask (uint8, 0 or 255).
+    """
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if image.dtype != np.uint8:
+        image = cv2.normalize(
+            image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U
+        )
+    if block_size % 2 == 0:
+        block_size += 1
+    return cv2.adaptiveThreshold(
+        image, 255, method, cv2.THRESH_BINARY, block_size, c
+    )

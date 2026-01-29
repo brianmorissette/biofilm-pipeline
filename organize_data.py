@@ -10,12 +10,7 @@ from collections import defaultdict
 
 def reorganize_raw_data_paired(source_dir, output_dir, dry_run=True):
     """
-    Reorganize raw_data into biofilm/ and release/ folders with only paired images.
-
-    Args:
-        source_dir: Path to the current raw_data folder
-        output_dir: Path to the new reorganized folder
-        dry_run: If True, only print what would be done without copying files
+    Reorganize raw data into biofilm/ and release/ folders with only paired images.
     """
     source_path = Path(source_dir)
     output_path = Path(output_dir)
@@ -144,15 +139,13 @@ def reorganize_raw_data_paired(source_dir, output_dir, dry_run=True):
 
 if __name__ == "__main__":
     # Configure paths
-    source_directory = "data/raw_data_new_"
-    output_directory = (
-        "data/raw_data_reorganized_new"
-    )
+    source_directory = "data/raw"
+    output_directory = "data/processed"
 
     # First, run with dry_run=True to see what will happen
     print("=== DRY RUN ===\n")
     reorganize_raw_data_paired(source_directory, output_directory, dry_run=True)
 
     # Uncomment the following lines to actually perform the reorganization
-    print("\n\n=== ACTUAL RUN ===\n")
-    reorganize_raw_data_paired(source_directory, output_directory, dry_run=False)
+    # print("\n\n=== ACTUAL RUN ===\n")
+    # reorganize_raw_data_paired(source_directory, output_directory, dry_run=False)
